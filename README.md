@@ -1,1 +1,2 @@
-"# JbTraderExample" 
+# JbTraderExample
+
