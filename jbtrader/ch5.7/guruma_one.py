@@ -1,5 +1,6 @@
 import sys
 from PyQt5 import uic, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtCore import QTimer
 from pykiwoom.kiwoom import Kiwoom
 
@@ -12,6 +13,9 @@ class StockTrader(QtWidgets.QMainWindow):
         self.kiwoom = Kiwoom()  # Kiwoom API 객체 생성
         self.kiwoom.CommConnect(block=True)  # API 로그인 (블록킹 방식)
 
+        # orderType 초기 설정
+        self.set_order_type()
+
         # 서버 연결 상태 확인 후 로그 출력
         self.check_server_connection()
 
@@ -19,10 +23,15 @@ class StockTrader(QtWidgets.QMainWindow):
         self.get_account_info()
 
         # 주문 버튼 이벤트 설정
-        self.orderType.currentIndexChanged.connect(self.process_order)
+        self.buyButton.clicked.connect(self.process_order)
 
         # 체결 이벤트 처리
         self.kiwoom.OnReceiveChejanData = self.receive_chejan_data
+
+    def set_order_type(self):
+        # orderType 초기 설정
+        self.orderType.addItems(["시장가", "지정가"])
+        self.orderType.setCurrentText("시장가")
 
     def check_server_connection(self):
         """키움증권 서버 연결 상태 확인 후 로그 출력"""
@@ -47,17 +56,33 @@ class StockTrader(QtWidgets.QMainWindow):
         sell_amount = self.sellAmount.text()
         account = self.accountComboBox.currentText()
 
-        if not stock_code or not buy_amount:
-            self.logTextEdit.append("주식 코드와 매수 수량을 입력하세요.")
+        if not stock_code:
+            QMessageBox.warning(self, "입력 오류", "종목 코드를 입력하세요.")
+            self.logTextEdit.append("종목 코드를 입력하세요.")
+            return
+
+        if not order_type:
+            QMessageBox.warning(self, "입력 오류", "주문 종류를 선택하세요.")
+            self.logTextEdit.append("주문 종류를 선택하세요.")
+            return
+
+        if not buy_price:
+            QMessageBox.warning(self, "입력 오류", "매수 금액을 입력하세요.")
+            self.logTextEdit.append("매수 금액을 입력하세요.")
+            return
+
+        if not buy_amount:
+            QMessageBox.warning(self, "입력 오류", "매수 수량을 입력하세요.")
+            self.logTextEdit.append("매수 수량을 입력하세요.")
             return
 
         if order_type == "시장가":
             order_type_code = 1  # 시장가 매수 주문 코드
             price = 0  # 시장가는 가격 입력 없이 0으로 설정
             msg = f"{stock_code} 시장가로 {buy_amount}주 매수 주문 실행"
-        elif order_type == "매수가":
+        elif order_type == "지정가":
             if not buy_price:
-                self.logTextEdit.append("매수가를 입력하세요.")
+                self.logTextEdit.append("매수 가격을 입력하세요.")
                 return
             order_type_code = 0  # 지정가 매수 주문 코드
             price = int(buy_price)

@@ -56,14 +56,14 @@
     <widget class="QLabel" name="label_2">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>10</x>
        <y>70</y>
        <width>56</width>
        <height>12</height>
       </rect>
      </property>
      <property name="text">
-      <string>종목</string>
+      <string>종목 코드</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="stockCode">
@@ -79,14 +79,14 @@
     <widget class="QLabel" name="label_3">
      <property name="geometry">
       <rect>
-       <x>30</x>
+       <x>10</x>
        <y>110</y>
        <width>56</width>
        <height>12</height>
       </rect>
      </property>
      <property name="text">
-      <string>종류</string>
+      <string>주문 종류</string>
      </property>
     </widget>
     <widget class="QComboBox" name="orderType">
@@ -192,7 +192,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="buyButton">
     <property name="geometry">
      <rect>
       <x>110</x>
@@ -235,7 +235,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
