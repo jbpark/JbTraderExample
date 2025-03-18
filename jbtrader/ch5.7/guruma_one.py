@@ -12,6 +12,9 @@ class StockTrader(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi("guruma_one.ui", self)  # UI 파일 로드
 
+        # 서버구분 > 실서버: "0", 모의투자 서버: "1"
+        self.serverGubun = None
+
         self.kiwoom = Kiwoom()  # Kiwoom API 객체 생성
         self.kiwoom.CommConnect(block=True)  # API 로그인 (블록킹 방식)
 
@@ -134,6 +137,12 @@ class StockTrader(QtWidgets.QMainWindow):
         :param msg: string - 서버로 부터의 메시지
         """
 
+        if "RC4058" in msg:
+            if self.serverGubun == "1":
+                QMessageBox.warning(self, "장 종료 오류", "오늘 모의 투자 장 종료되었습니다.")
+            else:
+                QMessageBox.warning(self, "장 종료 오류", "오늘 실 서버 장 종료되었습니다.")
+
         self.addLog(f"receive_msg :: msg={msg}")
 
     def receive_real_data(self, code, realType, realData):
@@ -172,12 +181,36 @@ class StockTrader(QtWidgets.QMainWindow):
         :param inquiry: string - 조회('0': 남은 데이터 없음, '2': 남은 데이터 있음)
         """
 
+        self.addLog(f"스크린 번호: {screenNo}")
+        self.addLog(f"요청명: {requestName}")
+        self.addLog(f"트랜잭션 코드: {trCode}")
+        self.addLog(f"기록 이름: {recordName}")
+        self.addLog(f"이전 여부: {inquiry}")
+
+        # 주문 결과 처리 (KOA_NORMAL_BUY_KP_ORD)
+        if trCode == "KOA_NORMAL_BUY_KP_ORD":
+            # 체결 결과 받기
+            체결가격 = self.kiwoom.GetCommData(trCode, recordName, 0, "체결가격")
+            체결수량 = self.kiwoom.GetCommData(trCode, recordName, 0, "체결수량")
+            주문상태 = self.kiwoom.GetCommData(trCode, recordName, 0, "주문상태")
+
+            self.addLog(f"체결가격: {체결가격}")
+            self.addLog(f"체결수량: {체결수량}")
+            self.addLog(f"주문상태: {주문상태}")
+
+            if 주문상태 == "완료":
+                self.addLog("주문이 체결되었습니다.")
+            elif 주문상태 == "취소":
+                self.addLog("장 종료로 인해 주문이 취소되었습니다.")
+            else:
+                self.addLog("주문 처리에 실패했습니다.")
+
         self.addLog("receiveTrData 실행: ", screenNo, requestName, trCode, recordName, inquiry)
 
     def check_server_connection(self):
         """키움증권 서버 연결 상태 확인 후 로그 출력"""
-        server = self.kiwoom.GetLoginInfo("GetServerGubun")
-        if server == "1":
+        self.serverGubun = self.kiwoom.GetLoginInfo("GetServerGubun")
+        if self.serverGubun == "1":
             self.addLog("모의 투자 서버 연결 성공")
         else:
             self.addLog("실 서버 연결 성공")
