@@ -66,7 +66,7 @@ class StockTrader(QtWidgets.QMainWindow):
             self.logTextEdit.append("주문 종류를 선택하세요.")
             return
 
-        if not buy_price:
+        if order_type == "지정가" and not buy_price:
             QMessageBox.warning(self, "입력 오류", "매수 금액을 입력하세요.")
             self.logTextEdit.append("매수 금액을 입력하세요.")
             return
