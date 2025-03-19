@@ -96,9 +96,6 @@ class StockTrader(QtWidgets.QMainWindow):
         # 주문 버튼 이벤트 설정
         self.buyButton.clicked.connect(self.process_order)
 
-        # 계좌 잔고
-        # self.load_balance()
-
     def addLog(self, *args):
         print(args)
         output = " ".join(map(str, args))
@@ -120,47 +117,26 @@ class StockTrader(QtWidgets.QMainWindow):
 
         print("사용할 계좌:", account_num)
 
-        # self.inquiryTimer.stop()
+        df = self.kiwoom.block_request("opw00004",
+                                       계좌번호=account_num,
+                                       비밀번호="",
+                                       상장폐지조회구분=0,
+                                       비밀번호입력매체구분="00",
+                                       output="계좌평가현황",
+                                       next=0)
 
-        # 설정 파일 읽기
-        config = configparser.ConfigParser()
-        config.read("kiwoom.conf", encoding="utf-8")
-
-        # 로그인 정보 가져오기
-        kiwoom_id = config["LOGIN"]["id"]
-        cheja_password = config["LOGIN"]["cheja_password"]
-        kiwoom_cert_pw = config["LOGIN"]["cert_password"]
-
-        try:
-            # TR 요청: 예수금 조회 (opw00001)
-            self.kiwoom.SetInputValue("계좌번호", account_num)
-            self.kiwoom.SetInputValue("비밀번호", cheja_password)  # 실제로는 비밀번호 입력 필요
-            self.kiwoom.SetInputValue("비밀번호입력매체구분", "00")
-            self.kiwoom.SetInputValue("조회구분", "2")
-
-            # TR 요청
-            self.kiwoom.CommRqData("opw00001_req", "OPW00001", 0, "2000")
-            time.sleep(1)  # 요청 후 잠시 대기
-
-            # 데이터 받아오기
-            예수금 = self.kiwoom.GetCommData("opw00001", "opw00001_req", 0, "예수금").strip()
-            예수금 = int(예수금)
-
-            # 예수금 출력
-            print(f"예수금: {예수금} 원")
-
-        except (Exception) as e:
-            self.addLog(e)
-
-        # data = self.kiwoom.tr_data["opw00018"]
-
-        # 예수금, 총평가, 추정자산 업데이트
-        item = QTableWidgetItem(self.kiwoom.opw00001Data)  # d+2추정예수금
+        # 예수금, 추정예탁자산, 누적투자손익 업데이트
+        item = QTableWidgetItem(str(int(df['D+2추정예수금'][0])))
         item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
-        self.accountBalance.setItem(0, 0, item)
-        # self.deposit_label.setText(f"예수금: {data.get('예수금', 'N/A')}")
-        # self.total_eval_label.setText(f"총평가: {data.get('총평가', 'N/A')}")
-        # self.estimated_asset_label.setText(f"추정자산: {data.get('추정자산', 'N/A')}")
+        self.accountBalance.setItem(1, 0, item)
+
+        item = QTableWidgetItem(str(int(df['추정예탁자산'][0])))
+        item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        self.accountBalance.setItem(1, 1, item)
+
+        item = QTableWidgetItem(str(int(df['누적투자손익'][0])))
+        item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        self.accountBalance.setItem(1, 2, item)
 
     def set_order_type(self):
         # orderType 초기 설정

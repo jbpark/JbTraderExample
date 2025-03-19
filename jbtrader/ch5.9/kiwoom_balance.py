@@ -18,7 +18,7 @@ class BalanceViewer(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # 예수금, 총평가, 추정자산 라벨 추가
+        # D+2추정예수금, 추정예탁자산, 누적투자손익 라벨 추가
         self.deposit_label = QLabel("D+2추정예수금: ")
         self.total_eval_label = QLabel("추정예탁자산: ")
         self.estimated_asset_label = QLabel("누적투자손익: ")

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>787</height>
+    <width>1720</width>
+    <height>1118</height>
    </rect>
   </property>
   <property name="font">
@@ -226,8 +226,8 @@
      <rect>
       <x>10</x>
       <y>400</y>
-      <width>271</width>
-      <height>331</height>
+      <width>301</width>
+      <height>641</height>
      </rect>
     </property>
     <property name="title">
@@ -238,8 +238,8 @@
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>251</width>
-       <height>291</height>
+       <width>281</width>
+       <height>601</height>
       </rect>
      </property>
     </widget>
@@ -249,33 +249,33 @@
      <rect>
       <x>330</x>
       <y>40</y>
-      <width>411</width>
+      <width>441</width>
       <height>111</height>
      </rect>
     </property>
     <row>
      <property name="text">
-      <string>열1</string>
+      <string>항목</string>
      </property>
     </row>
     <row>
      <property name="text">
-      <string>열2</string>
+      <string>데이터</string>
      </property>
     </row>
     <column>
      <property name="text">
-      <string>예수금</string>
+      <string>예수금 D+2</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>총평가</string>
+      <string>추정예탁자산</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>추정자산</string>
+      <string>누적투자손익</string>
      </property>
     </column>
    </widget>
@@ -285,7 +285,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1720</width>
      <height>26</height>
     </rect>
    </property>
