@@ -1,10 +1,42 @@
 import sys
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import QTimer
-from pykiwoom.kiwoom import Kiwoom
 import traceback
-import time
+from enum import Enum
+
+from PyQt5 import uic, QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem
+from pykiwoom.kiwoom import Kiwoom
+
+
+# 주문 유형 Enum (매수/매도)
+class OrderType(Enum):
+    BUY = 1  # 매수
+    SELL = 2  # 매도
+    CANCEL_BUY = 3  # 매수 취소
+    CANCEL_SELL = 4  # 매도 취소
+    MODIFY_BUY = 5  # 매수 정정
+    MODIFY_SELL = 6  # 매도 정정
+
+
+# 주문 호가 유형 Enum
+class HogaType(Enum):
+    LIMIT = "00"  # 지정가
+    MARKET = "03"  # 시장가
+    CONDITIONAL_LIMIT = "05"  # 조건부지정가
+    BEST_LIMIT = "06"  # 최유리지정가
+    BEST_PRIORITY_LIMIT = "07"  # 최우선지정가
+
+    LIMIT_IOC = "10"  # 지정가 IOC
+    MARKET_IOC = "13"  # 시장가 IOC
+    BEST_IOC = "16"  # 최유리 IOC
+
+    LIMIT_FOK = "20"  # 지정가 FOK
+    MARKET_FOK = "23"  # 시장가 FOK
+    BEST_FOK = "26"  # 최유리 FOK
+
+    PRE_MARKET_CLOSE = "61"  # 장전 시간외 종가
+    AFTER_HOURS_SINGLE = "62"  # 시간외 단일가
+    POST_MARKET_CLOSE = "81"  # 장후 시간외 종가
 
 
 class StockTrader(QtWidgets.QMainWindow):
@@ -66,6 +98,27 @@ class StockTrader(QtWidgets.QMainWindow):
         print(args)
         output = " ".join(map(str, args))
         self.logTextEdit.append(output)
+
+    def load_balance(self):
+        self.kiwoom.CommRqData("opw00018_req", "opw00018", 0, "0101")
+
+        if self.kiwoom.tr_data is None:
+            print("tr_data가 None입니다. 데이터 요청이 실패했을 가능성이 있습니다.")
+            return
+
+        if "opw00018" not in self.kiwoom.tr_data or self.kiwoom.tr_data["opw00018"] is None:
+            print("잔고 데이터를 가져오지 못했습니다.")
+            return
+
+        data = self.kiwoom.tr_data["opw00018"]
+
+        # 예수금, 총평가, 추정자산 업데이트
+        item = QTableWidgetItem(self.kiwoom.opw00001Data)  # d+2추정예수금
+        item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        self.accountBalance.setItem(0, 0, item)
+        # self.deposit_label.setText(f"예수금: {data.get('예수금', 'N/A')}")
+        # self.total_eval_label.setText(f"총평가: {data.get('총평가', 'N/A')}")
+        # self.estimated_asset_label.setText(f"추정자산: {data.get('추정자산', 'N/A')}")
 
     def set_order_type(self):
         # orderType 초기 설정
@@ -166,7 +219,7 @@ class StockTrader(QtWidgets.QMainWindow):
             self.addLog('{}'.format(e))
 
     def receive_tr_data(self, screenNo, requestName, trCode, recordName, inquiry,
-                      deprecated1, deprecated2, deprecated3, deprecated4):
+                        deprecated1, deprecated2, deprecated3, deprecated4):
         """
         TR 수신 이벤트
 
@@ -251,14 +304,16 @@ class StockTrader(QtWidgets.QMainWindow):
             return
 
         if order_type == "시장가":
-            order_type_code = 1  # 시장가 매수 주문 코드
+            order_type_code = OrderType.BUY.value  # order type 매수
+            hoga = HogaType.MARKET.value  # 시장가 주문
             price = 0  # 시장가는 가격 입력 없이 0으로 설정
             msg = f"{stock_code} 시장가로 {buy_amount}주 매수 주문 실행"
         elif order_type == "지정가":
             if not buy_price:
                 self.addLog("매수 가격을 입력하세요.")
                 return
-            order_type_code = 0  # 지정가 매수 주문 코드
+            order_type_code = OrderType.BUY.value  # order type 매수
+            hoga = HogaType.LIMIT.value  # 지정가 주문
             price = int(buy_price)
             msg = f"{stock_code} {buy_price}원으로 {buy_amount}주 매수 주문 실행"
         else:
@@ -266,8 +321,31 @@ class StockTrader(QtWidgets.QMainWindow):
 
         self.addLog(msg)
 
-        try :
-            result = self.kiwoom.SendOrder("매수주문", "0101", account, order_type_code, stock_code, int(buy_amount), price, "00", "")
+        # kiwoom.SendOrder
+        # 1번째 파라미터 = 사용자가 임의로 지정할 수 있는 요청 이름
+        # 2번째 파라미터 = 화면 번호 ('0001' ~ '9999')
+        # 3번째 파라미터 = 계좌 번호 10자리
+        # 4번째 파라미터 = 주문 타입
+        #                 1 - 신규 매수, 2 - 신규 매도, 3 - 매수 취소,
+        #                 4 - 매도 취소, 5 - 매수 정정, 6 - 매도 정정
+        # 5번째 파라미터 = 종목 코드
+        # 6번째 파라미터 = 주문 수량
+        # 7번째 파라미터 = 주문 단가
+        # 8번째 파라미터 = 호가
+        #                 00 - 지정가, 03 - 시장가,
+        #                 05 - 조건부지정가, 06 - 최유리지정가, 07 - 최우선지정가,
+        #                 10 - 지정가IOC, 13 - 시장가IOC, 16 - 최유리IOC
+        #                 20 - 지정가FOK, 23 - 시장가FOK, 26 - 최유리FOK
+        #                 61 - 장전시간외종가, 62 - 시간외단일가, 81 - 장후시간외종가
+        # 9번째 파라미터 = 원문 주문 번호 (신규 주문 시 공백, 정정이나 취소 시 원문 주문 번호 입력)
+
+        try:
+            if order_type == "시장가":
+                result = self.kiwoom.SendOrder("시장가매수", "0101", account, order_type_code, stock_code, int(buy_amount),
+                                               price, hoga, "")
+            else:
+                result = self.kiwoom.SendOrder("지정가매수", "0101", account, order_type_code, stock_code, int(buy_amount),
+                                               price, hoga, "")
             if result != 0:
                 raise Exception(f"SendOrder 실패! 리턴값: {result}")
 
@@ -278,16 +356,18 @@ class StockTrader(QtWidgets.QMainWindow):
             self.addLog("🔹 상세 오류 정보:")
             traceback.print_exc()  # 전체 스택 트레이스 출력
 
-
     def receive_chejan_data(self, gubun, item_cnt, fid_list):
         print(f"receive_chejan_data :: gubun:{gubun}")
 
         """체결 이벤트가 발생했을 때 실행되는 함수"""
         if gubun == "0":  # 매수 체결
-            stock_code = self.kiwoom.GetChejanData(9001).strip()
-            stock_name = self.kiwoom.GetMasterCodeName(stock_code)
-            price = self.kiwoom.GetChejanData(910).strip()
-            amount = self.kiwoom.GetChejanData(900).strip()
+            stock_code = self.kiwoom.GetChejanData(9001).strip().lstrip('A')  # 종목 코드
+            stock_name = self.kiwoom.GetChejanData(302).strip()  # 종목명
+            order_no = self.kiwoom.GetChejanData(9203)  # 주문번호
+            price = self.kiwoom.GetChejanData(910).strip() # 주문 가격
+            amount = self.kiwoom.GetChejanData(900).strip() # 주문 수량
+            executed_quantity = self.kiwoom.GetChejanData(911).strip()  # 체결 수량
+            trade_type = self.kiwoom.GetChejanData(913).strip()  # 매매 구분 (1: 매수, 2: 매도)
             self.addLog(f"{stock_name} {price}원으로 {amount}주 매수 체결 완료")
 
             # 매수 체결 후 매도 주문 실행
@@ -308,11 +388,19 @@ class StockTrader(QtWidgets.QMainWindow):
             self.addLog("매도가격과 매도 수량을 입력하세요.")
             return
 
-        order_type_code = 1  # 시장가 매도
+        order_type_code = OrderType.SELL.value  # 2: 매도
+        hoga = HogaType.LIMIT.value  # 지정가 주문
         msg = f"{stock_code} {sell_price}원으로 {sell_amount}주 매도 주문 실행"
 
-        self.kiwoom.SendOrder("매도주문", "0101", account, order_type_code, stock_code, int(sell_amount), int(sell_price),
-                              "00", "")
+        order_id = self.kiwoom.SendOrder("지정가매도", "0101", account, order_type_code, stock_code, int(sell_amount), int(sell_price),
+                              hoga, "")
+
+        # 주문 결과 확인
+        if order_id == 0:
+            self.addLog("지정가 매도 주문 성공!")
+        else:
+            self.addLog(f"주문 실패! 오류 코드: {order_id}")
+
         self.addLog(msg)
 
 
