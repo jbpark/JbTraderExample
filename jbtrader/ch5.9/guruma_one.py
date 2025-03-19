@@ -1,11 +1,13 @@
 import sys
 import traceback
 from enum import Enum
+import time
 
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem
 from pykiwoom.kiwoom import Kiwoom
+import configparser
 
 
 # 주문 유형 Enum (매수/매도)
@@ -94,23 +96,63 @@ class StockTrader(QtWidgets.QMainWindow):
         # 주문 버튼 이벤트 설정
         self.buyButton.clicked.connect(self.process_order)
 
+        # 계좌 잔고
+        # self.load_balance()
+
     def addLog(self, *args):
         print(args)
         output = " ".join(map(str, args))
         self.logTextEdit.append(output)
 
     def load_balance(self):
-        self.kiwoom.CommRqData("opw00018_req", "opw00018", 0, "0101")
+        if self.kiwoom.GetConnectState() == 0:
+            print("키움증권 로그인 실패!")
+        else:
+            print("키움증권 로그인 성공!")
 
-        if self.kiwoom.tr_data is None:
-            print("tr_data가 None입니다. 데이터 요청이 실패했을 가능성이 있습니다.")
-            return
+        accounts = self.kiwoom.GetLoginInfo("ACCNO")
+        print("계좌 목록:", accounts)
 
-        if "opw00018" not in self.kiwoom.tr_data or self.kiwoom.tr_data["opw00018"] is None:
-            print("잔고 데이터를 가져오지 못했습니다.")
-            return
+        if isinstance(accounts, list):  # 리스트이면 첫 번째 계좌 선택
+            account_num = accounts[0]
+        else:  # 문자열이면 split() 사용
+            account_num = accounts.strip().split(';')[0]
 
-        data = self.kiwoom.tr_data["opw00018"]
+        print("사용할 계좌:", account_num)
+
+        # self.inquiryTimer.stop()
+
+        # 설정 파일 읽기
+        config = configparser.ConfigParser()
+        config.read("kiwoom.conf", encoding="utf-8")
+
+        # 로그인 정보 가져오기
+        kiwoom_id = config["LOGIN"]["id"]
+        cheja_password = config["LOGIN"]["cheja_password"]
+        kiwoom_cert_pw = config["LOGIN"]["cert_password"]
+
+        try:
+            # TR 요청: 예수금 조회 (opw00001)
+            self.kiwoom.SetInputValue("계좌번호", account_num)
+            self.kiwoom.SetInputValue("비밀번호", cheja_password)  # 실제로는 비밀번호 입력 필요
+            self.kiwoom.SetInputValue("비밀번호입력매체구분", "00")
+            self.kiwoom.SetInputValue("조회구분", "2")
+
+            # TR 요청
+            self.kiwoom.CommRqData("opw00001_req", "OPW00001", 0, "2000")
+            time.sleep(1)  # 요청 후 잠시 대기
+
+            # 데이터 받아오기
+            예수금 = self.kiwoom.GetCommData("opw00001", "opw00001_req", 0, "예수금").strip()
+            예수금 = int(예수금)
+
+            # 예수금 출력
+            print(f"예수금: {예수금} 원")
+
+        except (Exception) as e:
+            self.addLog(e)
+
+        # data = self.kiwoom.tr_data["opw00018"]
 
         # 예수금, 총평가, 추정자산 업데이트
         item = QTableWidgetItem(self.kiwoom.opw00001Data)  # d+2추정예수금
@@ -267,6 +309,9 @@ class StockTrader(QtWidgets.QMainWindow):
             self.addLog("모의 투자 서버 연결 성공")
         else:
             self.addLog("실 서버 연결 성공")
+
+        # 계좌 잔고
+        self.load_balance()
 
     def get_account_info(self):
         """로그인한 계좌 정보를 가져와 ComboBox에 추가"""
