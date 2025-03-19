@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1720</width>
+    <width>986</width>
     <height>1118</height>
    </rect>
   </property>
@@ -279,13 +279,48 @@
      </property>
     </column>
    </widget>
+   <widget class="QTableWidget" name="accountStocks">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>170</y>
+      <width>631</width>
+      <height>551</height>
+     </rect>
+    </property>
+    <column>
+     <property name="text">
+      <string>종목명</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>평가손익</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>수익률(%)</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>보유수량</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>매입가</string>
+     </property>
+    </column>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1720</width>
+     <width>986</width>
      <height>26</height>
     </rect>
    </property>

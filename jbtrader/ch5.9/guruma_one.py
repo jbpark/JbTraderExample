@@ -138,6 +138,45 @@ class StockTrader(QtWidgets.QMainWindow):
         item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
         self.accountBalance.setItem(1, 2, item)
 
+    def load_stocks(self):
+        if self.kiwoom.GetConnectState() == 0:
+            print("키움증권 로그인 실패!")
+        else:
+            print("키움증권 로그인 성공!")
+
+        accounts = self.kiwoom.GetLoginInfo("ACCNO")
+        print("계좌 목록:", accounts)
+
+        if isinstance(accounts, list):  # 리스트이면 첫 번째 계좌 선택
+            account_num = accounts[0]
+        else:  # 문자열이면 split() 사용
+            account_num = accounts.strip().split(';')[0]
+
+        print("사용할 계좌:", account_num)
+
+        df = self.kiwoom.block_request("opw00018",
+                                       계좌번호=account_num,
+                                       비밀번호="",
+                                       비밀번호입력매체구분="00",
+                                       조회구분=2,
+                                       output="계좌평가잔고개별합산",
+                                       next=0)
+
+        columns = ["종목명", "평가손익", "수익률(%)", "보유수량", "매입가"]
+        self.accountStocks.setColumnCount(len(columns))
+        self.accountStocks.setHorizontalHeaderLabels(columns)
+
+        self.accountStocks.setRowCount(len(df))
+
+        rowNum = 0
+        for index, row in df.iterrows():
+            self.accountStocks.setItem(rowNum, 0, QTableWidgetItem(row['종목명']))
+            self.accountStocks.setItem(rowNum, 1, QTableWidgetItem(str(int(row['평가손익']))))
+            self.accountStocks.setItem(rowNum, 2, QTableWidgetItem(str(float(row['수익률(%)']))))
+            self.accountStocks.setItem(rowNum, 3, QTableWidgetItem(str(int(row['보유수량']))))
+            self.accountStocks.setItem(rowNum, 4, QTableWidgetItem(str(int(row['매입가']))))
+            rowNum += 1
+
     def set_order_type(self):
         # orderType 초기 설정
         self.orderType.addItems(["시장가", "지정가"])
@@ -288,6 +327,9 @@ class StockTrader(QtWidgets.QMainWindow):
 
         # 계좌 잔고
         self.load_balance()
+
+        # 보유 종목
+        self.load_stocks()
 
     def get_account_info(self):
         """로그인한 계좌 정보를 가져와 ComboBox에 추가"""
