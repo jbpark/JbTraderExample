@@ -151,31 +151,11 @@
       <string>매도 수량</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="buyPrice">
-     <property name="geometry">
-      <rect>
-       <x>80</x>
-       <y>157</y>
-       <width>161</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
     <widget class="QLineEdit" name="buyAmount">
      <property name="geometry">
       <rect>
        <x>80</x>
        <y>196</y>
-       <width>161</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="sellPrice">
-     <property name="geometry">
-      <rect>
-       <x>80</x>
-       <y>240</y>
        <width>161</width>
        <height>21</height>
       </rect>
@@ -188,6 +168,26 @@
        <y>285</y>
        <width>161</width>
        <height>21</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="buyPrice">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>150</y>
+       <width>161</width>
+       <height>22</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="sellPrice">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>240</y>
+       <width>161</width>
+       <height>22</height>
       </rect>
      </property>
     </widget>
