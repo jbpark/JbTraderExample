@@ -362,9 +362,9 @@ class StockTrader(QtWidgets.QMainWindow):
         """orderType 선택에 따라 매수 주문을 실행"""
         order_type = self.orderType.currentText()
         stock_code = self.stockCode.text()
-        buy_price = self.buyPrice.text()
+        buy_price = self.buyPrice.currentData()
         buy_amount = self.buyAmount.text()
-        sell_price = self.sellPrice.text()
+        sell_price = self.sellPrice.currentData()
         sell_amount = self.sellAmount.text()
         account = self.accountComboBox.currentText()
 
@@ -553,7 +553,7 @@ class StockTrader(QtWidgets.QMainWindow):
         self.buyPrice.clear()
         self.sellPrice.clear()
 
-        for i in range(-20, 21):  # -20호가부터 +20호가까지 추가
+        for i in range(20, -21, -1):  # -20호가부터 +20호가까지 추가
             price = current_price + i * price_tick
             label = f"{i}호가: {price}" if i != 0 else f"현재가: {price}"
             self.buyPrice.addItem(label, price)
@@ -561,7 +561,7 @@ class StockTrader(QtWidgets.QMainWindow):
 
         # 기본값 설정: buyPrice는 현재가, sellPrice는 +1호가
         self.buyPrice.setCurrentIndex(20)
-        self.sellPrice.setCurrentIndex(21)
+        self.sellPrice.setCurrentIndex(19)
 
         self.logTextEdit.append(f"현재가 {current_price}원부터 ±20호가까지 설정 완료")
 
