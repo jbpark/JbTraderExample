@@ -10,6 +10,8 @@ from pykiwoom.kiwoom import Kiwoom
 import configparser
 from PyQt5.QtCore import QTimer
 
+# 매수/매도 가격 호가 차이
+BUY_SELL_TICK_DIFF = 2
 
 # 주문 유형 Enum (매수/매도)
 class OrderType(Enum):
@@ -109,6 +111,8 @@ class StockTrader(QtWidgets.QMainWindow):
 
         self.buyPrice.installEventFilter(self)
         self.sellPrice.installEventFilter(self)
+
+        self.buyPrice.currentIndexChanged.connect(self.updateSellPrice)
 
     def addLog(self, *args):
         print(args)
@@ -559,9 +563,9 @@ class StockTrader(QtWidgets.QMainWindow):
             self.buyPrice.addItem(label, price)
             self.sellPrice.addItem(label, price)
 
-        # 기본값 설정: buyPrice는 현재가, sellPrice는 +1호가
+        # 기본값 설정: buyPrice는 현재가, sellPrice는 BUY_SELL_TICK_DIFF (+2)호가
         self.buyPrice.setCurrentIndex(20)
-        self.sellPrice.setCurrentIndex(19)
+        self.sellPrice.setCurrentIndex(20 - BUY_SELL_TICK_DIFF)
 
         self.logTextEdit.append(f"현재가 {current_price}원부터 ±20호가까지 설정 완료")
 
@@ -572,6 +576,12 @@ class StockTrader(QtWidgets.QMainWindow):
         print("stop_price_update")
         self.price_update_timer.stop()
         self.logTextEdit.append("가격 선택 완료. 자동 업데이트 중지")
+
+    def updateSellPrice(self, index):
+        if index - BUY_SELL_TICK_DIFF >= 0:  # sellPrice 범위 체크
+            self.sellPrice.setCurrentIndex(index - BUY_SELL_TICK_DIFF)
+        else:
+            self.sellPrice.setCurrentIndex(0)  # 첫 번째 인덱스로 설정
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
