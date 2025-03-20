@@ -6,8 +6,6 @@ import pandas as pd
 import threading
 
 
-# 현재가 tr요청으로 받기
-
 class btl_system():
     def __init__(self):
         self.kiwoom = QAxWidget("KHOPENAPI.KHOpenAPICtrl.1")
@@ -35,7 +33,6 @@ class btl_system():
         self.login_event_loop.exit()
 
     def rq_data_opt10001(self, stock_code):
-        print("27줄에서 입력받은 종목코드를 키움서버에 요청합니다.")
         self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "종목코드", stock_code)
         self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)", "opt_10001", "opt10001", 0, "0303")
         self.tr_event_loop = QEventLoop()
@@ -50,8 +47,6 @@ class btl_system():
 
             stock_code = stock_code.strip()
             current_price1 = abs(int(current_price1))
-            # print(stock_code)  # 결과값 출력하는 곳
-            # print(current_price1)  # 결과값 출력하는 곳
 
             self.current_price_gubun['stock_code'].append(stock_code)
             self.current_price_gubun['current_price1'].append(current_price1)

@@ -1,8 +1,16 @@
 import sys
+
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import QTimer
 from pykiwoom.kiwoom import Kiwoom
+
+
+def get_cell_value_or_error(df, row_idx, col_name):
+    try:
+        return df.at[row_idx, col_name]  # 특정 위치의 값 반환
+    except KeyError:
+        raise ValueError(f"Invalid index '{row_idx}' or column '{col_name}'")
 
 
 class GurumaApp(QMainWindow):
@@ -23,9 +31,17 @@ class GurumaApp(QMainWindow):
         self.price_update_timer.timeout.connect(self.update_stock_price)
         self.price_update_timer.start(5000)  # 5초마다 실행
 
-        # 사용자가 가격을 선택하면 타이머 정지
-        self.buyPrice.valueChanged.connect(self.stop_price_update)
-        self.sellPrice.valueChanged.connect(self.stop_price_update)
+        self.buyPrice.installEventFilter(self)
+        self.sellPrice.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if (obj == self.buyPrice or obj == self.sellPrice) and event.type() == event.MouseButtonPress:
+            self.on_combobox_clicked()
+        return super().eventFilter(obj, event)
+
+    def on_combobox_clicked(self):
+        print("QComboBox가 클릭되었습니다!")  # 특정 함수 실행
+        self.stop_price_update()
 
     def event_connect(self, err_code):
         """
@@ -87,10 +103,23 @@ class GurumaApp(QMainWindow):
         """
                 조회한 주식 정보를 buyPrice와 sellPrice에 반영
                 """
-        current_price_str = self.kiwoom.GetCommData("opt10001", "", 0, "현재가").strip()
+
+        stock_code = self.stockCode.text().strip()
+        if not stock_code:
+            self.logTextEdit.append("종목 코드를 입력하세요.")
+            return
+
+        df = self.kiwoom.block_request("opt10001",
+                                       종목코드=stock_code,
+                                       output="주식기본정보",
+                                       next=0)
+
+        current_price_str = get_cell_value_or_error(df, 0, '현재가')
         if not current_price_str:
             self.logTextEdit.append("현재가 정보를 가져올 수 없습니다.")
             return
+
+        current_price_str = str(int(current_price_str))
 
         try:
             current_price = abs(int(current_price_str))
@@ -119,6 +148,7 @@ class GurumaApp(QMainWindow):
         """
         사용자가 가격을 선택하면 타이머 정지
         """
+        print("stop_price_update")
         self.price_update_timer.stop()
         self.logTextEdit.append("가격 선택 완료. 자동 업데이트 중지")
 
