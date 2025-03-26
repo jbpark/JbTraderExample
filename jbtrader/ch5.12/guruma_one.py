@@ -379,10 +379,10 @@ class StockTrader(QtWidgets.QMainWindow):
         """
 
         if realType == "주식체결":
-            체결시간 = self.kiwoom.dynamicCall("GetCommRealData(QString, int)", code, 20)  # HHMMSS
-            현재가 = self.kiwoom.dynamicCall("GetCommRealData(QString, int)", code, 10)  # ±현재가
-            등락율 = self.kiwoom.dynamicCall("GetCommRealData(QString, int)", code, 12)  # ±등락율
-            체결량 = self.kiwoom.dynamicCall("GetCommRealData(QString, int)", code, 15)  # 체결량
+            체결시간 = self.kiwoom.GetCommRealData(code, 20)  # HHMMSS
+            현재가 = self.kiwoom.GetCommRealData(code, 10)  # ±현재가
+            등락율 = self.kiwoom.GetCommRealData(code, 12)  # ±등락율
+            체결량 = self.kiwoom.GetCommRealData(code, 15)  # 체결량
 
             print(f"[{code}] 체결시간: {체결시간}, 현재가: {현재가}, 등락율: {등락율}, 체결량: {체결량}")
 
